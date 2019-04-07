@@ -1,6 +1,11 @@
 # CS 541: Deep Learning Project
 ## Tensorflow implementation of "Top-down Neural Attention by Excitation Backprop"
 
-### Dependencies:
+### To Install Dependencies:
 
-TF Slim: https://github.com/tensorflow/models/tree/master/research/slim
+`git submodule update --init --recursive`
+
+
+### TO-DO:
+
+Add documentation for entire code
