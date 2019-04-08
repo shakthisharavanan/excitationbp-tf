@@ -18,8 +18,8 @@ import glob
 import time
 import pdb
 
-slim_dir = "/mnt/workspace/models/research/slim/"
-checkpoints_dir = "/mnt/workspace/models/checkpoints/"
+slim_dir = "./models/research/slim/"
+checkpoints_dir = "./checkpoints/"
 sys.path.insert(0, slim_dir)
 from nets import vgg
 from preprocessing import vgg_preprocessing
