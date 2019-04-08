@@ -5,6 +5,8 @@
 
 `git submodule update --init --recursive`
 
+Create a checkpoints directory and download the "vgg_16.ckpt" from http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz
+
 
 ### TO-DO:
 
