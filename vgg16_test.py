@@ -18,8 +18,8 @@ import glob
 import time
 import pdb
 
-slim_dir = "/mnt/workspace/models/research/slim/"
-checkpoints_dir = "/mnt/workspace/models/checkpoints/"
+slim_dir = "./models/research/slim/"
+checkpoints_dir = "./checkpoints/"
 sys.path.insert(0, slim_dir)
 from nets import vgg
 from preprocessing import vgg_preprocessing
@@ -41,8 +41,9 @@ if __name__ == "__main__":
 	batch_size = 1
 
 	# image_file = "./data/imagenet/catdog/catdog.jpg"
-	# image_file = "./data/dome.jpg"
-	image_file = "./data/cat_1.jpg"
+	image_file = "./data/dome.jpg"
+	# image_file = "./data/cat_1.jpg"
+	# image_file = "./data/beer.jpg"
 	# image_file = "./data/elephant.jpeg"
 
 	# image = Image.open(image_file)
@@ -149,7 +150,7 @@ if __name__ == "__main__":
 			heatmap = np.sum(P['pool5'], axis = 2)
 			heatmap_resized = transform.resize(heatmap, (image_size, image_size), order = 3, mode = 'constant')
 			plt.imshow(image)
-			plt.imshow(heatmap_resized, cmap = 'jet', alpha = 0.5)
+			plt.imshow(heatmap_resized, cmap = 'jet', alpha = 0.7)
 			plt.show()
 
 			pdb.set_trace()
