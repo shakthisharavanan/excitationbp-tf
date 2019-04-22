@@ -148,17 +148,6 @@ if __name__ == "__main__":
 			P['pool5'] = pool5_activations * o # 25088 x 1
 			P['pool5'] = P['pool5'].reshape(7, 7, 512)
 
-
-			""" For conv5_3 MWP """
-			# Get pool 5 to conv5_3 gradients
-			dy_dx = sess.run(tf.gradients(endpoints['vgg_16/pool5'], endpoints['vgg_16/conv5/conv5_3']), feed_dict = {x: image})[0][0] # (14, 14, 512)
-			
-			# Get conv5_3 activations
-			conv5_3_activations = np.copy(layer_activations[-5]) # (1, 14, 14, 512)
-
-			unpool = P['pool5'].repeat(2, axis = 0).repeat(2, axis = 1) # (14, 14, 512)
-			
-
 			heatmap = np.sum(P['pool5'], axis = 2)
 			heatmap_resized = transform.resize(heatmap, (image_size, image_size), order = 3, mode = 'constant')
 			plt.imshow(image)
