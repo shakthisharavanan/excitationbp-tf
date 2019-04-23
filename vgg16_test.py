@@ -28,17 +28,27 @@ from skimage import transform, filters
 from PIL import Image
 import scipy
 
+from im2col import *
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+def plot_heatmap(image, excitation):
+    (h, w, c) = image.shape
+    heatmap = np.sum(excitation, axis=2)
+    heatmap_resized = transform.resize(heatmap, (h, w), order=3, mode='constant')
+    plt.imshow(image)
+    plt.imshow(heatmap_resized, cmap='jet', alpha=0.7)
+    plt.show()
 
 if __name__ == "__main__":
     # Set some parameters
     image_size = vgg.vgg_16.default_image_size
     batch_size = 1
 
-    # image_file = "./data/imagenet/catdog/catdog.jpg"
-    image_file = "./data/dome.jpg"
+    image_file = "./data/imagenet/catdog/catdog.jpg"
+    # image_file = "./data/dome.jpg"
     # image_file = "./data/cat_1.jpg"
     # image_file = "./data/beer.jpg"
     # image_file = "./data/elephant.jpeg"
@@ -140,12 +150,48 @@ if __name__ == "__main__":
             P['pool5'] = pool5_activations * o  # 25088 x 1
             P['pool5'] = P['pool5'].reshape(7, 7, 512)
 
-            heatmap = np.sum(P['pool5'], axis=2)
-            heatmap_resized = transform.resize(heatmap, (image_size, image_size), order=3, mode='constant')
-            plt.imshow(image)
-            plt.imshow(heatmap_resized, cmap='jet', alpha=0.7)
-            plt.show()
+            plot_heatmap(image, P['pool5'])
 
-            pdb.set_trace()
+            """ For conv5_3 MWP """
+            doubled_volume = P['pool5'].repeat(2, axis=0).repeat(2, axis=1)  # (14, 14, 512)
+            # Get pool 5 to conv5_3 gradients
+            dy_dx = sess.run(tf.gradients(endpoints['vgg_16/pool5'], endpoints['vgg_16/conv5/conv5_3']), feed_dict={x: image})[
+                0][0]  # (14, 14, 512)
+            P['conv5_3'] = dy_dx * doubled_volume
+
+            plot_heatmap(image, P['conv5_3'])
+
+            # Get conv5_3 weights
+            conv5_3_weights= np.copy(weights_val[-8])  # (3, 3, 512, 512)
+
+            # Get conv5_2 activations
+            conv5_2_activations = np.copy(layer_activations[-6])  # (1, 14, 14, 512)
+            print("Hello")
+
+            x = np.transpose(conv5_2_activations, [0,3,1,2])
+            cols = im2col_indices(x, 3, 3)  # (4608, 196)
+
+            conv5_3_weights_reshaped = conv5_3_weights.reshape(-1, conv5_3_weights.shape[3]) # (4608, 512)
+
+            # Calculate MWP of pool5 using Eq 10 in paper
+            conv5_3_weights_reshaped = conv5_3_weights_reshaped.clip(min=0)  # threshold weights at 0
+            m = np.dot(conv5_3_weights_reshaped.T, cols)  # 512 x 196
+            n = P['conv5_3'].reshape(-1, 512).T / m  # 512 X 196
+            o = np.dot(conv5_3_weights_reshaped, n)  # 4608 x 196
+            k = cols * o  # 4608 x 196
+            k = col2im_indices(k, x.shape, 3, 3)
+            P['conv5_2'] = k.transpose([0, 2, 3, 1])
+
+            plot_heatmap(image, P['conv5_2'][0])
+
+
+
+            # heatmap = np.sum(P['pool5'], axis=2)
+            # heatmap_resized = transform.resize(heatmap, (image_size, image_size), order=3, mode='constant')
+            # plt.imshow(image)
+            # plt.imshow(heatmap_resized, cmap='jet', alpha=0.7)
+            # plt.show()
+
+            # pdb.set_trace()
 
             sleep(0.1)
