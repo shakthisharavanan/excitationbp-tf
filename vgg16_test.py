@@ -30,6 +30,9 @@ import scipy
 
 from im2col import *
 
+from eb_fns.eb_fc import *
+from eb_fns.eb_conv import *
+
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -47,11 +50,11 @@ if __name__ == "__main__":
     image_size = vgg.vgg_16.default_image_size
     batch_size = 1
 
-    image_file = "./data/imagenet/catdog/catdog.jpg"
+    # image_file = "./data/imagenet/catdog/catdog.jpg"
     # image_file = "./data/dome.jpg"
     # image_file = "./data/cat_1.jpg"
     # image_file = "./data/beer.jpg"
-    # image_file = "./data/elephant.jpeg"
+    image_file = "./data/elephant.jpeg"
 
     # image = Image.open(image_file)
     # image.thumbnail((image_size, image_size), Image.ANTIALIAS) # resizes image in-place
@@ -120,19 +123,23 @@ if __name__ == "__main__":
             o = np.dot(fc8_weights, n)  # 4096 x 1
             P['fc7'] = fc7_activations * o  # 4096 x 1
 
+            P['fc7'] = getMWPfc(P['fc8'], weights_val[-2], ((layer_activations[-2])[0, 0]).T)
+
             """ For fc6 MWP """
-            # Get fc7 weights
-            fc7_weights = np.copy((weights_val[-4])[0, 0])  # 4096 X 4096
+            # # Get fc7 weights
+            # fc7_weights = np.copy((weights_val[-4])[0, 0])  # 4096 X 4096
+            #
+            # # Get fc6 activations
+            # fc6_activations = np.copy((layer_activations[-3])[0, 0]).T  # 4096 X 1
+            #
+            # # Calculate MWP of fc6 using Eq 10 in paper
+            # fc7_weights = fc7_weights.clip(min=0)  # threshold weights at 0
+            # m = np.dot(fc7_weights.T, fc6_activations)  # 4096 x 1
+            # n = P['fc7'] / m  # 4096 x 1
+            # o = np.dot(fc7_weights, n)  # 4096 x 1
+            # P['fc6'] = fc6_activations * o  # 4096 * 1
 
-            # Get fc6 activations
-            fc6_activations = np.copy((layer_activations[-3])[0, 0]).T  # 4096 X 1
-
-            # Calculate MWP of fc6 using Eq 10 in paper
-            fc7_weights = fc7_weights.clip(min=0)  # threshold weights at 0
-            m = np.dot(fc7_weights.T, fc6_activations)  # 4096 x 1
-            n = P['fc7'] / m  # 4096 x 1
-            o = np.dot(fc7_weights, n)  # 4096 x 1
-            P['fc6'] = fc6_activations * o  # 4096 * 1
+            P['fc6'] = getMWPfc(P['fc7'], weights_val[-4], ((layer_activations[-3])[0, 0]).T)
 
             """ For pool5 MWP """
             # Get fc6 weights
