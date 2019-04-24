@@ -41,7 +41,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def plot_heatmap(image, excitation, title=None):
     (h, w, c) = image.shape
     heatmap = np.sum(excitation.squeeze(), axis=-1)
-    heatmap_resized = transform.resize(heatmap, (h, w), order=3, mode='constant').clip(min=0)
+    # heatmap = np.pad(heatmap, ((1,1), (1,1)), mode='constant', constant_values=(0))
+    # TODO: Activations look zoomed, need to find the reason
+    heatmap_resized = transform.resize(heatmap.clip(min=0), (h, w), order=1, mode='constant')
     plt.imshow(image)
     plt.imshow(heatmap_resized, cmap='jet', alpha=0.7)
     if title:
@@ -53,11 +55,11 @@ if __name__ == "__main__":
     image_size = vgg.vgg_16.default_image_size
     batch_size = 1
 
-    image_file = "./data/imagenet/catdog/catdog.jpg"
+    # image_file = "./data/imagenet/catdog/catdog.jpg"
     # image_file = "./data/dome.jpg"
     # image_file = "./data/cat_1.jpg"
     # image_file = "./data/beer.jpg"
-    # image_file = "./data/elephant.jpeg"
+    image_file = "./data/elephant.jpeg"
 
     # image = Image.open(image_file)
     # image.thumbnail((image_size, image_size), Image.ANTIALIAS) # resizes image in-place
@@ -217,8 +219,12 @@ if __name__ == "__main__":
 
             plot_heatmap(image, P['pool4'], "pool4")
 
+
+
+
+
             """ For conv4_3 MWP """
-            # Get pool 5 to conv5_3 gradients
+            # Get pool 4 to conv4_3 gradients
             dy_dx = sess.run(tf.gradients(endpoints['vgg_16/pool4'], endpoints['vgg_16/conv4/conv4_3']), feed_dict={x: image})[
                 0]  # (1, 14, 14, 512)
             P['conv4_3'] = getMWPmaxpool(P['pool4'], layer_activations[-9], dy_dx)
@@ -239,6 +245,78 @@ if __name__ == "__main__":
             P['pool3'] = getMWPconv(P['conv4_1'], weights_val[-18], layer_activations[-12])
 
             plot_heatmap(image, P['pool3'], "pool3")
+
+
+
+
+
+
+            """ For conv3_3 MWP """
+            # Get pool 3 to conv3_3 gradients
+            dy_dx = \
+            sess.run(tf.gradients(endpoints['vgg_16/pool3'], endpoints['vgg_16/conv3/conv3_3']), feed_dict={x: image})[
+                0]  # (1, 14, 14, 512)
+            P['conv3_3'] = getMWPmaxpool(P['pool3'], layer_activations[-13], dy_dx)
+            plot_heatmap(image, P['conv3_3'], "conv3_3")
+
+            """ For conv3_2 MWP """
+            P['conv3_2'] = getMWPconv(P['conv3_3'], weights_val[-20], layer_activations[-14])
+            plot_heatmap(image, P['conv3_2'], "conv3_2")
+
+            """ For conv3_1 MWP """
+            P['conv3_1'] = getMWPconv(P['conv3_2'], weights_val[-22], layer_activations[-15])
+            plot_heatmap(image, P['conv3_1'], "conv3_1")
+
+            """ For pool3 MWP """
+            P['pool2'] = getMWPconv(P['conv3_1'], weights_val[-24], layer_activations[-16])
+            plot_heatmap(image, P['pool2'], "pool2")
+
+
+
+
+
+
+            """ For conv2_2 MWP """
+            # Get pool 2 to conv2_2 gradients
+            dy_dx = \
+                sess.run(tf.gradients(endpoints['vgg_16/pool2'], endpoints['vgg_16/conv2/conv2_2']),
+                         feed_dict={x: image})[
+                    0]  # (1, 14, 14, 512)
+            P['conv2_2'] = getMWPmaxpool(P['pool2'], layer_activations[-17], dy_dx)
+            plot_heatmap(image, P['conv2_2'], "conv2_2")
+
+            """ For conv2_1 MWP """
+            P['conv2_1'] = getMWPconv(P['conv2_2'], weights_val[-26], layer_activations[-18])
+            plot_heatmap(image, P['conv2_1'], "conv2_1")
+
+            """ For conv2_1 MWP """
+            P['pool1'] = getMWPconv(P['conv2_1'], weights_val[-28], layer_activations[-19])
+            plot_heatmap(image, P['pool1'], "pool1")
+
+
+
+
+
+
+
+            """ For conv1_2 MWP """
+            # Get pool 1 to conv1_2 gradients
+            dy_dx = \
+                sess.run(tf.gradients(endpoints['vgg_16/pool1'], endpoints['vgg_16/conv1/conv1_2']),
+                         feed_dict={x: image})[
+                    0]  # (1, 14, 14, 512)
+            P['conv1_2'] = getMWPmaxpool(P['pool1'], layer_activations[-20], dy_dx)
+            plot_heatmap(image, P['conv1_2'], "conv1_2")
+
+            """ For conv1_1 MWP """
+            P['conv1_1'] = getMWPconv(P['conv1_2'], weights_val[-30], layer_activations[-21])
+            plot_heatmap(image, P['conv1_1'], "conv1_1")
+
+            # """ For input MWP """
+            # P['input'] = getMWPconv(P['conv1_1'], weights_val[-32], sess.run(normalized_images, feed_dict={x: image}).clip(min=0))
+            # plot_heatmap(image, P['input'], "input")
+
+
 
 
 
