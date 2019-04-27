@@ -38,17 +38,23 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-def plot_heatmap(image, excitation, title=None):
+save_index = 0
+
+def plot_heatmap(image, excitation, title=None, padding=0):
+    global save_index
     (h, w, c) = image.shape
     heatmap = np.sum(excitation.squeeze(), axis=-1)
-    # heatmap = np.pad(heatmap, ((1,1), (1,1)), mode='constant', constant_values=(0))
+    # heatmap = np.pad(heatmap, ((13,13), (13,13)), mode='constant', constant_values=(0))
     # TODO: Activations look zoomed, need to find the reason
     heatmap_resized = transform.resize(heatmap.clip(min=0), (h, w), order=1, mode='constant')
     plt.imshow(image)
     plt.imshow(heatmap_resized, cmap='jet', alpha=0.7)
     if title:
         plt.title(title)
-    plt.show()
+
+    # plt.savefig("{}_zebra_cEB_{}_.png".format(save_index, title))
+    # save_index += 1
+    # plt.show()
 
 if __name__ == "__main__":
     # Set some parameters
@@ -111,7 +117,8 @@ if __name__ == "__main__":
 
             # Set one hot vector for the winning class
             p = np.zeros((1000, 1))
-            p[sorted_inds[0], 0] = 1
+            # p[sorted_inds[0], 0] = 1
+            p[340, 0] = 1       #
             P['fc8'] = np.copy(p)  # 1000 X 1
 
             """ For fc7 MWP """
@@ -129,6 +136,9 @@ if __name__ == "__main__":
             # P['fc7'] = fc7_activations * o  # 4096 x 1
 
             P['fc7'] = getMWPfc(P['fc8'].T.reshape(1,1,1,1000), weights_val[-2], layer_activations[-2])
+            cP = getMWPfc(P['fc8'].T.reshape(1, 1, 1, 1000), weights_val[-2] * -1, layer_activations[-2])
+
+            P['fc7'] -= cP
 
             """ For fc6 MWP """
             # # Get fc7 weights
