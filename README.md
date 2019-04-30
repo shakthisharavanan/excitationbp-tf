@@ -1,5 +1,8 @@
 # Tensorflow implementation of "Top-down Neural Attention by Excitation Backprop"
 
+### Requirements
+Tensorflow 1.3, tf-slim, scikit-learn, matplotlib, tqdm
+
 ### To Install Dependencies:
 
 `git submodule update --init --recursive`
